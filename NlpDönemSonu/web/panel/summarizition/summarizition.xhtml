@@ -1,0 +1,202 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+            <h:outputStylesheet library="css" name="bootstrap.min.css"/>
+
+    <title>Haber Kartları</title>
+    <style>
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            padding: 2rem 1rem;
+        }
+
+        .flip-card {
+            width: 320px;
+            height: 220px;
+            perspective: 1200px;
+            cursor: pointer;
+            margin: 1rem;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(.25,.8,.25,1);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.2rem;
+            box-sizing: border-box;
+        }
+
+        .flip-card-front {
+            background: linear-gradient(135deg, #4a90e2, #357ab8);
+        }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            transform: rotateY(180deg);
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .card-summary {
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .category-label {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem;
+            font-size: 0.75rem;
+            background-color: rgba(255,255,255,0.25);
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</h:head>
+
+<h:body>
+    
+     <h:form styleClass="d-flex justify-content-end p-3 bg-light">
+    <h:panelGroup rendered="#{not empty sessionBean.user}">
+        <style>
+            .profile-wrapper {
+                position: relative;
+                display: inline-block;
+            }
+            .user-card {
+                background: #ffffff;
+                border: 1px solid #ced4da;
+                padding: 8px 20px;
+                border-radius: 50px;
+                cursor: pointer;
+                font-weight: 600;
+                color: #2c3e50;
+                user-select: none; /* Metnin seçilmesini engeller */
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .user-card:active { background: #f1f1f1; }
+
+            .dropdown-logout {
+                display: none; /* Varsayılan olarak kapalı */
+                position: absolute;
+                top: 110%;
+                right: 0;
+                min-width: 160px;
+                background-color: white;
+                box-shadow: 0px 8px 16px rgba(0,0,0,0.15);
+                padding: 12px;
+                z-index: 1000;
+                border-radius: 8px;
+                border: 1px solid #eee;
+            }
+            
+            /* Bu sınıf eklendiğinde menü görünür olacak */
+            .show-menu {
+                display: block !important;
+            }
+            
+            .logout-btn { width: 100%; text-align: center; }
+        </style>
+
+        <div class="profile-wrapper">
+            <div class="user-card" onclick="toggleMenu(event)">
+                <span>👤 #{sessionBean.user.userName} #{sessionBean.user.lastName}</span>
+                <small style="font-size: 0.7em; color: #6c757d;">(#{sessionBean.user.group.gname}) ▼</small>
+            </div>
+            
+            <div id="logoutDropdown" class="dropdown-logout">
+                <h:commandLink action="#{sessionBean.logout}" 
+                               value="Güvenli Çıkış (Exit)" 
+                               styleClass="btn btn-danger btn-sm logout-btn" />
+            </div>
+        </div>
+
+        <script>
+            function toggleMenu(event) {
+                // Tıklanan yerin dışına tıklayınca kapanması için durdurma
+                event.stopPropagation();
+                var dropdown = document.getElementById("logoutDropdown");
+                dropdown.classList.toggle("show-menu");
+            }
+
+            // Sayfada başka bir yere tıklanırsa menüyü kapat
+            window.onclick = function(event) {
+                var dropdown = document.getElementById("logoutDropdown");
+                if (dropdown.classList.contains('show-menu')) {
+                    dropdown.classList.remove('show-menu');
+                }
+            }
+        </script>
+    </h:panelGroup>
+</h:form>
+    
+     <div class="row">
+                
+                 <h:form>
+                    <h:commandButton styleClass="btn btn-outline-primary" action="/panel/category/category?faces-redirect=true" value="Categories"/>
+                    <h:commandButton styleClass="btn btn-outline-primary" action="/panel/group/group?faces-redirect=true" value="Group"/>
+                    <h:commandButton styleClass="btn btn-outline-primary" action="/panel/user/user?faces-redirect=true" value="User"/>
+                    <h:commandButton styleClass="btn btn-outline-primary" action="/panel/news_category/news_category?faces-redirect=true" value="News"/>
+                    <h:commandButton styleClass="btn btn-outline-secondary" action="/panel/summarizition/summarizition?faces-redirect=true" value="Summary"/>
+                    <h:commandButton styleClass="btn btn-outline-primary" action="/panel/panel?faces-redirect=true" value="Ana Sayfa"/> 
+                </h:form>
+            </div>
+    
+    <div class="card-container">
+        <ui:repeat value="#{sessionBean.userNews}" var="news">
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner">
+                    <!-- Ön yüz -->
+                    <div class="flip-card-front">
+                        <div class="category-label">
+                            #{news.category.title}
+                        </div>
+                        <h5 class="card-title">#{news.title}</h5>
+                    </div>
+                    <!-- Arka yüz -->
+                    <div class="flip-card-back">
+                        <h5 class="card-title">#{news.title}</h5>
+                        <p class="card-summary">#{news.summary}</p>
+                    </div>
+                </div>
+            </div>
+        </ui:repeat>
+    </div>
+</h:body>
+</html>
